@@ -1,9 +1,9 @@
-import './App.css';
+// import './App.css';
 import MainLayout from './layout/MainLayout';
 
 function App() {
   return (
-    <div className="App">
+    <div className="bg-[#131313] h-screen">
       <MainLayout />
     </div>
   );

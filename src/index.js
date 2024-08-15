@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { createConfig, WagmiProvider } from 'wagmi';
 import { http } from '@wagmi/core';
 import { mainnet, sepolia } from 'wagmi/chains';
-import { RainbowKitProvider, lightTheme, getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { RainbowKitProvider, darkTheme, getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '@rainbow-me/rainbowkit/styles.css';
 import './index.css';
@@ -12,8 +12,6 @@ import reportWebVitals from './reportWebVitals';
 
 const wagmiConfig = createConfig({
   autoConnect: true,
-  // publicClients,
-  // websocketPublicClient,
   chains: [mainnet, sepolia],
   provider: http(),
   transports: {
@@ -35,7 +33,7 @@ root.render(
   <React.StrictMode>
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider config={rainbowConfig} theme={lightTheme()}>
+        <RainbowKitProvider config={rainbowConfig} theme={darkTheme()} modalSize="compact">
           <App />
         </RainbowKitProvider>
       </QueryClientProvider>
