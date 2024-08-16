@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button, Dropdown, Space } from 'antd';
-import { ArrowDownOutlined, DownOutlined } from '@ant-design/icons';
+import { ArrowDownOutlined, DownOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Token, Fetcher, Route } from '@uniswap/sdk-core';
 import { ethers } from 'ethers';
 import config from '../config';
@@ -74,14 +74,22 @@ const SwapTab = () => {
 
     const onClickSwapBtn = async () => {
         try {
+            const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
+            const signer = provider.getSigner();
+            const uniswapRouter = new ethers.Contract(config.local.UNISWAP_V2_ROUTER, ROUTER_ABI, signer);
             setLoading(true);
             if (swapForDFT) {
-                const signer = provider.getSigner();
-                const uniswapRouter = new ethers.Contract(config.local.UNISWAP_V2_ROUTER, ROUTER_ABI, signer);
-                const tx = await uniswapRouter.swapExactETHForTokens(0,);
-
+                const tx = await uniswapRouter.swapExactETHForTokens(0, [config.local.WETH_ADDRESS, config.local.DFT_ADDRESS], await signer.getAddress(), deadline, { value: ethers.utils.parseEther(String(valueA)) });
                 await tx.wait();
             }
+            else {
+                const tx = await uniswapRouter.swapExactTokensForETH(ethers.utils.parseEther(String(valueA)), 0, [config.local.DFT_ADDRESS, config.local.WETH_ADDRESS], await signer.getAddress(), deadline);
+                await tx.wait();
+            }
+            console.log('success swap');
+            alert('swap is success!');
+            setLoading(false);
+            getLiquidityInfo();
         } catch (err) {
             setLoading(false);
             alert(err);
@@ -238,6 +246,7 @@ const SwapTab = () => {
                                     className='flex flex-row justify-center basis-1/6 p-[16px] rounded-[20px] bg-[#39273c] mt-2 w-full text-[#f476fa] text-[32px] hover:bg-[#58405c] cursor-pointer'
                                     onClick={() => { onClickSwapBtn(); }}
                                 >
+                                    {loading && <LoadingOutlined />}
                                     Swap
                                 </div>
                             </div>

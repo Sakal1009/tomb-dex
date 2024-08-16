@@ -2,7 +2,7 @@ const config = {
     local: {
         UNISWAP_V2_ROUTER: "0xC532a74256D3Db42D0Bf7a0400fEFDbad7694008",
         FACTORY_ADDRESS: "0x7E0987E5b3a30e3f2828572Bb659A548460a3003",
-        WETH_ADDRESS: "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9", // Sepolia WETH address 0xfff9976782d46cc05630d1f6ebab18b2324d6b14
+        WETH_ADDRESS: "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
         DFT_ADDRESS: "0x6b39fD15eB12FBcA57261457ABcD79961ec1B4B3",
         chainLabel: 'Sepolia Testnet',
         rpcEndpoint: 'https://sepolia.infura.io/v2/',

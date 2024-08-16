@@ -9,11 +9,11 @@ import InfoTab from '../components/InfoTab';
 const { Header, Content } = Layout;
 
 const tabItems = [
-    {
-        key: '1',
-        label: <span className='text-[32px] text-white hover:text-blue-500'>Information</span>,
-        children: <InfoTab />,
-    },
+    // {
+    //     key: '1',
+    //     label: <span className='text-[32px] text-white hover:text-blue-500'>Information</span>,
+    //     children: <InfoTab />,
+    // },
     {
         key: '2',
         label: <span className='text-[32px] text-white hover:text-blue-500'>Liquidity Pool</span>,

@@ -87,7 +87,23 @@ const LiquidityTab = () => {
         } catch (err) {
             setLoading(false);
             alert(err);
-            console.error('Error adding liquidity pool:', err);
+            console.error('Error adding liquidity:', err);
+        }
+    };
+
+    const removeLiquidity = async () => {
+        try {
+            setLoading(true);
+            const signer = provider.getSigner();
+            const uniswapRouter = new ethers.Contract(config.local.UNISWAP_V2_ROUTER, ROUTER_ABI, signer);
+            const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
+            const tx = await uniswapRouter.removeLIquidityETH(config.local.DFT_ADDRESS, 0.00001, 0, 0, await signer.getAddress(), deadline);
+
+            await tx.wait();
+        } catch (err) {
+            setLoading(false);
+            alert(err);
+            console.error('Error remove liquidity:', err);
         }
     };
 
@@ -204,6 +220,18 @@ const LiquidityTab = () => {
                     </div>
                 </div>
             </div>
+            {/* <div className='flex flex-row justify-center mt-3 w-fulle'>
+                <div className='w-1/3 bg-[#131313] outline outline-2 outline-[#ffffff12] rounded-[18px]'>
+                    <StyledButton
+                        className='w-full rounnded-[18px] h-[40px] text-white text-[28px] bg-[#494545] enabled:hover:text-[white] enabled:hover:border-gray-200'
+                        icon={loading && <LoadingOutlined />}
+                        onClick={removeLiquidity}
+                        disabled={!pairAddress}
+                    >
+                        Remove liquidity
+                    </StyledButton>
+                </div>
+            </div> */}
         </Fragment>
     );
 };
