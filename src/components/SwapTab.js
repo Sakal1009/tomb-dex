@@ -1,43 +1,92 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Dropdown, Space } from 'antd';
 import { ArrowDownOutlined, DownOutlined } from '@ant-design/icons';
-
-// const items = [
-//     {
-//         label: 'Clicking me will not close the menu.',
-//         key: '1',
-//     },
-//     {
-//         label: 'Clicking me will not close the menu also.',
-//         key: '2',
-//     },
-//     {
-//         label: 'Clicking me will close the menu.',
-//         key: '3',
-//     },
-// ];
+import { Token, Fetcher, Route } from '@uniswap/sdk-core';
+import { ethers } from 'ethers';
+import config from '../config';
+import { ROUTER_ABI, FACTORY_ABI, DFT_ABI, PAIR_ABI } from '../constant';
 
 const SwapTab = () => {
     const [active, setActive] = useState('swap');
-    const [swapWETH, setSwapWETH] = useState(true);
+    const [pairAddress, setPairAddress] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [swapForDFT, setSwapForDFT] = useState(true);
     const [valueA, setValueA] = useState(0);
     const [valueB, setValueB] = useState(0);
+    const [reserveA, setReserveA] = useState(0);
+    const [reserveB, setReserveB] = useState(0);
+    const provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
 
-    // const [open, setOpen] = useState(false);
-    // const handleOpenChange = (nextOpen, info) => {
-    //     if (info.source === 'trigger' || nextOpen) {
-    //         setOpen(nextOpen);
-    //     }
-    // };
+    useEffect(() => {
+        const signer = provider.getSigner();
+        const factoryContract = new ethers.Contract(config.local.FACTORY_ADDRESS, FACTORY_ABI, signer);
+        const tx = factoryContract.getPair(config.local.DFT_ADDRESS, config.local.WETH_ADDRESS);
+        tx.then(ret => {
+            if (ret === ethers.constants.AddressZero)
+                setPairAddress(null);
+            else
+                setPairAddress(ret);
+        })
+            .catch(err => {
+                setPairAddress(null);
+            });
+    }, []);
 
-    // const handleMenuClick = (e) => {
-    //     if (e.key === '3') {
-    //         setOpen(false);
-    //     }
-    // };
+    useEffect(() => {
+        if (pairAddress)
+            getLiquidityInfo();
+    }, [pairAddress]);
 
-    const swap = () => {
-        console.log('swap');
+    const getLiquidityInfo = async () => {
+        if (pairAddress && pairAddress !== ethers.constants.AddressZero) {
+            try {
+                setLoading(true);
+                const pairContract = new ethers.Contract(pairAddress, PAIR_ABI, provider);
+                const [_reserve0, _reserve1] = await pairContract.getReserves();
+                if (_reserve0 && _reserve1) {
+                    setReserveA(parseFloat(_reserve0.toNumber() / Math.pow(10, 18)));
+                    setReserveB(parseFloat(_reserve1.toNumber() / Math.pow(10, 18)));
+                }
+                setLoading(false);
+            } catch (err) {
+                setLoading(false);
+                alert(err);
+                console.error('getLiquidityInfo error:', err);
+            }
+        }
+    };
+
+    const onChangeValueA = (e) => {
+        setValueA(+e.target.value);
+        if (swapForDFT)
+            setValueB(reserveB / reserveA * +e.target.value);
+        else
+            setValueB(reserveA / reserveB * +e.target.value);
+    };
+
+    const onChangeValueB = (e) => {
+        setValueB(+e.target.value);
+        if (swapForDFT)
+            setValueA(reserveA / reserveB * +e.target.value);
+        else
+            setValueA(reserveB / reserveA * +e.target.value);
+    };
+
+    const onClickSwapBtn = async () => {
+        try {
+            setLoading(true);
+            if (swapForDFT) {
+                const signer = provider.getSigner();
+                const uniswapRouter = new ethers.Contract(config.local.UNISWAP_V2_ROUTER, ROUTER_ABI, signer);
+                const tx = await uniswapRouter.swapExactETHForTokens(0,);
+
+                await tx.wait();
+            }
+        } catch (err) {
+            setLoading(false);
+            alert(err);
+            console.error('Error swap:', err);
+        }
     };
 
     return (
@@ -47,8 +96,8 @@ const SwapTab = () => {
             </div>
             <div className="flex flex-row justify-start h-full basis-1/2">
                 <div className="flex flex-col w-5/6 h-full">
-                    <div className="flex flex-row pb-5 basis-1/6">
-                        <div className="flex flex-row justify-between basis-3/4 felx-row">
+                    {/* <div className="flex flex-row pb-5 basis-1/6">
+                        <div className="flex flex-row justify-between basis-3/4">
                             <Button
                                 className={`${active === "swap" ? 'text-white' : 'text-gray-400'} text-[28px] rounded-[25px] bg-[#1d1d1d] px-8 py-5 hover:text-gray-600`}
                                 onClick={() => { setActive('swap'); }}
@@ -77,10 +126,15 @@ const SwapTab = () => {
                                 <img src="setting.png" alt="" />
                             </Button>
                         </div>
-                    </div>
+                    </div> */}
                     {
                         active === 'swap' && (
                             <div>
+                                <div className='flex flex-row justify-center mb-3'>
+                                    <span className='text-[32px] text-white'>
+                                        Current Price of DFT: {reserveA / reserveB}WETH
+                                    </span>
+                                </div>
                                 <div className="basis-2/6 p-[16px] rounded-[20px] bg-[#1b1b1b]">
                                     <div className='flex flex-row justify-start'>
                                         <span className='text-[20px] text-[#5e5e5e]'>
@@ -93,19 +147,19 @@ const SwapTab = () => {
                                                 className="bg-[#1b1b1b] border-none text-[#5e5e5e] text-[32px] focus-visible:outline-0 w-full [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0"
                                                 value={valueA}
                                                 type="number"
-                                                onChange={(e) => { setValueA(+e.target.value) }}
+                                                onChange={e => { onChangeValueA(e); }}
                                             />
                                         </span>
                                         <div className=''>
-                                            {swapWETH ? (
-                                                <div className='flex flex-row items-center'>
-                                                    <img src="ether.png" alt="" className='w-[25px] h-[25px] mr-1' />
-                                                    <span className="text-white text-[32px]">ETH</span>
-                                                </div>
-                                            ) : (
+                                            {swapForDFT ? (
                                                 <div className='flex flex-row items-center'>
                                                     <div className='w-[23px] h-[23px] bg-[#2fba61] text-[9px] mr-1 rounded-[20px] flex justify-center items-center'>WET</div>
                                                     <span className="text-white text-[32px]">WETH</span>
+                                                </div>
+                                            ) : (
+                                                <div className='flex flex-row items-center'>
+                                                    <div className='w-[23px] h-[23px] bg-[#823fce] text-[9px] mr-1 rounded-[20px] flex justify-center items-center'>DFT</div>
+                                                    <span className="text-white text-[32px]">DFT</span>
                                                 </div>
                                             )}
                                             {/* <span className="text-white text-[32px]">ETH</span> */}
@@ -129,8 +183,8 @@ const SwapTab = () => {
                                 </div>
                                 <div className='flex flex-row justify-center w-full mt-[-20px] mb-[-20px]'>
                                     <div
-                                        className='flex flex-row justify-center rounded-[15px] bg-[#1b1b1b] w-[40px] h-[40px] outline outline-4 outline-[#131313] hover:bg-[#1a1919] hover:text-[#a8a6a6] hover:scale-125'
-                                        onClick={() => { setSwapWETH(!swapWETH); }}
+                                        className='flex flex-row justify-center rounded-[15px] bg-[#1b1b1b] w-[40px] h-[40px] outline outline-4 outline-[#131313] hover:bg-[#1a1919] hover:text-[#a8a6a6] hover:scale-125 cursor-pointer'
+                                        onClick={() => { setSwapForDFT(!swapForDFT); }}
                                     >
                                         <ArrowDownOutlined />
                                     </div>
@@ -147,19 +201,19 @@ const SwapTab = () => {
                                                 className="bg-[#1b1b1b] border-none text-[#5e5e5e] text-[32px] focus-visible:outline-0 w-full [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0"
                                                 value={valueB}
                                                 type="number"
-                                                onChange={(e) => { setValueB(+e.target.value) }}
+                                                onChange={(e) => { onChangeValueB(e) }}
                                             />
                                         </span>
                                         <div className=''>
-                                            {!swapWETH ? (
-                                                <div className='flex flex-row items-center'>
-                                                    <img src="ether.png" alt="" className='w-[25px] h-[25px] mr-1' />
-                                                    <span className="text-white text-[32px]">ETH</span>
-                                                </div>
-                                            ) : (
+                                            {!swapForDFT ? (
                                                 <div className='flex flex-row items-center'>
                                                     <div className='w-[23px] h-[23px] bg-[#2fba61] text-[9px] mr-1 rounded-[20px] flex justify-center items-center'>WET</div>
                                                     <span className="text-white text-[32px]">WETH</span>
+                                                </div>
+                                            ) : (
+                                                <div className='flex flex-row items-center'>
+                                                    <div className='w-[23px] h-[23px] bg-[#823fce] text-[9px] mr-1 rounded-[20px] flex justify-center items-center'>DFT</div>
+                                                    <span className="text-white text-[32px]">DFT</span>
                                                 </div>
                                             )}
                                             {/* <Dropdown
@@ -181,8 +235,8 @@ const SwapTab = () => {
                                     </div>
                                 </div>
                                 <div
-                                    className='flex flex-row justify-center basis-1/6 p-[16px] rounded-[20px] bg-[#39273c] mt-2 w-full text-[#f476fa] text-[32px] hover:bg-[#58405c]'
-                                    onClick={() => { swap(); }}
+                                    className='flex flex-row justify-center basis-1/6 p-[16px] rounded-[20px] bg-[#39273c] mt-2 w-full text-[#f476fa] text-[32px] hover:bg-[#58405c] cursor-pointer'
+                                    onClick={() => { onClickSwapBtn(); }}
                                 >
                                     Swap
                                 </div>

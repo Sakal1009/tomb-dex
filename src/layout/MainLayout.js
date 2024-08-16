@@ -42,17 +42,6 @@ const MainLayout = () => {
                 <Tabs defaultActiveKey="2" items={tabItems} className='text-white' centered hideAdd />
             </Content>
         </Layout>
-        // <div className="flex flex-col items-center h-screen">
-        //     <div className="flex flex-row w-full grow">
-        //         <div className="basis-1/2">
-        //             <img src="ether_mark_1.jpg" alt="" className="w-[500px] h-[500px] rounded-[80px] hover:transition  hover:ease-in-out hover:w-[510px] hover:h-[510px] duration-200" />
-        //         </div>
-        //         <div className='text-white bg-red-200 basis-1/2'>AAAA</div>
-        //     </div>
-        //     <div className="flex-none w-full text-white bg-gray-100 h-1/5 grow-0">
-        //         AAA
-        //     </div>
-        // </div>
     );
 };
 
